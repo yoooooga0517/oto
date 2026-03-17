@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Yuga Rhythm Game</title>
+<style>
+body {
+  margin: 0;
+  background: #000;
+  overflow: hidden;
+  font-family: sans-serif;
+  color: white;
+}
+
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.lane {
+  position: absolute;
+  bottom: 0;
+  width: 25%;
+  height: 100%;
+  border-left: 1px solid #0ff;
+  border-right: 1px solid #0ff;
+}
+
+.lane:nth-child(1){ left:0; }
+.lane:nth-child(2){ left:25%; }
+.lane:nth-child(3){ left:50%; }
+.lane:nth-child(4){ left:75%; }
+
+.hit-line {
+  position: absolute;
+  bottom: 80px;
+  width: 100%;
+  height: 4px;
+  background: #0ff;
+  box-shadow: 0 0 10px #0ff;
+}
+
+.note {
+  position: absolute;
+  width: 100%;
+  height: 20px;
+  background: #0ff;
+  border-radius: 5px;
+}
+
+#score {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+#combo {
+  position: absolute;
+  top: 40px;
+  left: 10px;
+}
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div class="lane" data-lane="0"></div>
+  <div class="lane" data-lane="1"></div>
+  <div class="lane" data-lane="2"></div>
+  <div class="lane" data-lane="3"></div>
+  <div class="hit-line"></div>
+
+  <div id="score">Score: 0</div>
+  <div id="combo">Combo: 0</div>
+</div>
+
+<script>
+const lanes = document.querySelectorAll('.lane');
+const game = document.getElementById('game');
+
+let notes = [];
+let score = 0;
+let combo = 0;
+
+function createNote() {
+  const laneIndex = Math.floor(Math.random() * 4);
+  const lane = lanes[laneIndex];
+
+  const note = document.createElement('div');
+  note.classList.add('note');
+  note.style.top = "0px";
+
+  lane.appendChild(note);
+
+  notes.push({
+    el: note,
+    lane: laneIndex,
+    y: 0
+  });
+}
+
+function update() {
+  notes.forEach((note, index) => {
+    note.y += 5;
+    note.el.style.top = note.y + "px";
+
+    if (note.y > window.innerHeight) {
+      note.el.remove();
+      notes.splice(index, 1);
+      combo = 0;
+      updateUI();
+    }
+  });
+
+  requestAnimationFrame(update);
+}
+
+function hit(laneIndex) {
+  notes.forEach((note, index) => {
+    if (note.lane === laneIndex) {
+      const hitZone = window.innerHeight - 120;
+      if (Math.abs(note.y - hitZone) < 50) {
+        note.el.remove();
+        notes.splice(index, 1);
+
+        score += 100;
+        combo++;
+        updateUI();
+      }
+    }
+  });
+}
+
+function updateUI() {
+  document.getElementById('score').innerText = "Score: " + score;
+  document.getElementById('combo').innerText = "Combo: " + combo;
+}
+
+// キーボード操作
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'd') hit(0);
+  if (e.key === 'f') hit(1);
+  if (e.key === 'j') hit(2);
+  if (e.key === 'k') hit(3);
+});
+
+// タップ操作（スマホ対応）
+lanes.forEach((lane, index) => {
+  lane.addEventListener('touchstart', () => hit(index));
+  lane.addEventListener('click', () => hit(index));
+});
+
+// ノーツ生成
+setInterval(createNote, 600);
+
+// ゲーム開始
+update();
+</script>
+
+</body>
+</html>
